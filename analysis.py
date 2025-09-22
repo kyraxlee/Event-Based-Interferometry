@@ -27,6 +27,7 @@ def load_events_from_text(file_path):
             x = int(x)
             y = int(y)
             pol = -1 if int(pol) == 0 else 1
+            # Reverse x and y cause the plotting is flipped for some reason
             data.append((y, x, t, pol))
     if not data:
         raise ValueError("No valid events parsed from text file.")
@@ -41,37 +42,42 @@ def load_events_from_text(file_path):
 events, rows, cols = load_events_from_text(event_file)
 
 events = events[events[:, 2].argsort()]
-num_events = events.shape[0]
 
-print("Number of events:", num_events)
-timestamps = np.zeros((rows, cols), dtype=np.float64) - np.inf
-polarity = np.zeros((rows, cols), dtype=np.float64)
+# Focus on the region the laser is pointing at
+focused_events = np.array([e for e in events if 60 <= e[0] < 210 and 120 <= e[1] < 300])
+rows = 150
+cols = 180
+focused_events[:, 2] -= focused_events[0, 2] # Normalize time to start at 0
+focused_events[:, 0] -= 60 # Normalize x to start at 0
+focused_events[:, 1] -= 120 # Normalize y to start at 0
 
-time_tau = 10000.0
+print("Number of events:", focused_events.shape[0])
 
-def get_exponential_timesurf(polarity, timestamps, t, tau=5.0):
-    return np.exp(- (t - timestamps)/tau) * polarity
+# Intialize variables for plotting 
+# Timestamps in event data is in microseconds
+frequency = 80 # Hz
+timestep = np.floor(1000000 / frequency * 2) # microseconds
+surface = np.zeros((rows, cols))
+total_events = np.zeros(int(focused_events[-1, 2] // timestep) + 1)
 
-exponential_timesurface = get_exponential_timesurf(polarity, timestamps, 0, time_tau)
-
+# Plot
 fig = plt.figure(figsize=(10, 8))
-figure = plt.imshow(exponential_timesurface, cmap='viridis', vmin=-1, vmax=1)
+figure = plt.imshow(surface, cmap='viridis', vmin=-1, vmax=1)
 
-timestamps = np.zeros((rows, cols), dtype=np.float64) - np.inf
-polarity = np.zeros((rows, cols), dtype=np.float64)
-last_displayed_t = -1.0
-
-for event_idx in range(num_events):
-    x, y, t, p = events[event_idx]
+for x, y, t ,p in focused_events :
     x, y = int(x), int(y)
-    timestamps[x, y] = t
-    polarity[x, y] = p
+    surface[x, y] = p
 
-    if event_idx % 100000 == 0:
-        last_displayed_t = t
-
-        exponential_timesurface = get_exponential_timesurf(polarity, timestamps, t, time_tau)
-        
-        figure.set_data(exponential_timesurface)
+    if t % timestep == 0:
+        total_events = np.sum(np.abs(surface))
+        figure.set_data(surface)
         fig.canvas.draw_idle()
         plt.pause(0.1)
+        # Reset the surface to display the next frame
+        # Can implement a decay factor here instead
+        surface = np.zeros((rows, cols))
+
+plt.close()
+
+# Plot the total events over time
+print(total_events)
