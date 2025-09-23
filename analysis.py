@@ -44,40 +44,47 @@ events, rows, cols = load_events_from_text(event_file)
 events = events[events[:, 2].argsort()]
 
 # Focus on the region the laser is pointing at
-focused_events = np.array([e for e in events if 60 <= e[0] < 210 and 120 <= e[1] < 300])
-rows = 150
-cols = 180
+focused_events = np.array([e for e in events if 50 <= e[0] < 220 and 110 <= e[1] < 310])
+rows = 170
+cols = 200
 focused_events[:, 2] -= focused_events[0, 2] # Normalize time to start at 0
-focused_events[:, 0] -= 60 # Normalize x to start at 0
-focused_events[:, 1] -= 120 # Normalize y to start at 0
+focused_events[:, 0] -= 50 # Normalize x to start at 0
+focused_events[:, 1] -= 110 # Normalize y to start at 0
 
 print("Number of events:", focused_events.shape[0])
 
 # Intialize variables for plotting 
 # Timestamps in event data is in microseconds
-frequency = 80 # Hz
-timestep = np.floor(1000000 / frequency * 2) # microseconds
+frequency = int(input("Enter the frequency: ")) # Hz
+timestep = int(1000000 / (frequency * 2)) # microseconds
 surface = np.zeros((rows, cols))
 total_events = np.zeros(int(focused_events[-1, 2] // timestep) + 1)
 
 # Plot
 fig = plt.figure(figsize=(10, 8))
 figure = plt.imshow(surface, cmap='viridis', vmin=-1, vmax=1)
+index = 0
 
 for x, y, t ,p in focused_events :
     x, y = int(x), int(y)
     surface[x, y] = p
-
-    if t % timestep == 0:
-        total_events = np.sum(np.abs(surface))
+    if int(t // timestep) == index: 
         figure.set_data(surface)
         fig.canvas.draw_idle()
-        plt.pause(0.1)
+        # Comment this line to skip the animation
+        #plt.pause(0.1)
         # Reset the surface to display the next frame
         # Can implement a decay factor here instead
-        surface = np.zeros((rows, cols))
-
+        total_events[int(t // timestep)] = np.sum(abs(surface))
+        surface = np.zeros((rows, cols)) 
+        index += 1
+    
 plt.close()
 
 # Plot the total events over time
-print(total_events)
+plt.figure(figsize=(8, 4))
+plt.plot(total_events, linestyle = '-', color='b', label="Data")
+plt.xlabel("Time")
+plt.ylabel("Number of events")
+plt.title("Number of events per timestep")
+plt.show()
