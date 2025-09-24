@@ -7,6 +7,7 @@ import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
 
+# Load events files adapted from Yeshwanth lecture
 def load_events_from_text(file_path):
     p = Path(file_path)
     if not p.exists():
@@ -43,20 +44,32 @@ events, rows, cols = load_events_from_text(event_file)
 
 events = events[events[:, 2].argsort()]
 
-# Focus on the region the laser is pointing at
-focused_events = np.array([e for e in events if 50 <= e[0] < 220 and 110 <= e[1] < 310])
-rows = 170
-cols = 200
+# Set the bounds for the square we want to focus in.
+# The commented value is (almost) the entire laser region
+x_upper = 150       # 50
+x_lower = 100       # 220
+y_upper = 260       # 110
+y_lower = 210       # 310
+
+# Filter the events according to the bounds
+focused_events = np.array([e for e in events if x_lower <= e[0] < x_upper and y_lower <= e[1] < y_upper])
 focused_events[:, 2] -= focused_events[0, 2] # Normalize time to start at 0
-focused_events[:, 0] -= 50 # Normalize x to start at 0
-focused_events[:, 1] -= 110 # Normalize y to start at 0
+focused_events[:, 0] -= x_lower             # Normalize x to start at 0
+focused_events[:, 1] -= y_lower             # Normalize y to start at 0
+
+# Set the rows and cols for plotting
+rows = y_upper - y_lower + 1
+cols = x_upper - x_lower + 1
 
 print("Number of events:", focused_events.shape[0])
 
 # Intialize variables for plotting 
 # Timestamps in event data is in microseconds
 frequency = int(input("Enter the frequency: ")) # Hz
+# Timestep is set to twice the frequency for Nyquist
 timestep = int(1000000 / (frequency * 2)) # microseconds
+
+# For plotting
 surface = np.zeros((rows, cols))
 total_events = np.zeros(int(focused_events[-1, 2] // timestep) + 1)
 
@@ -73,10 +86,12 @@ for x, y, t ,p in focused_events :
         fig.canvas.draw_idle()
         # Comment this line to skip the animation
         #plt.pause(0.1)
+        # Get the total number of events
+        total_events[int(t // timestep)] = np.sum(abs(surface))
         # Reset the surface to display the next frame
         # Can implement a decay factor here instead
-        total_events[int(t // timestep)] = np.sum(abs(surface))
         surface = np.zeros((rows, cols)) 
+        # Go to next timestep
         index += 1
     
 plt.close()
@@ -84,7 +99,7 @@ plt.close()
 # Plot the total events over time
 plt.figure(figsize=(8, 4))
 plt.plot(total_events, linestyle = '-', color='b', label="Data")
-plt.xlabel("Time")
+plt.xlabel("Timestep")
 plt.ylabel("Number of events")
 plt.title("Number of events per timestep")
 plt.show()
