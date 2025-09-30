@@ -46,10 +46,15 @@ events = events[events[:, 2].argsort()]
 
 print("Number of events:", events.shape[0])
 
+event_type = 1 # 1 for ON events
+#event_type = -1 # -1 for OFF events
+#event_type = 0 # 0 for all events
+
 heatmap = np.zeros((rows, cols))
 for x, y, t, p in events:
     x, y = int(x), int(y)
-    heatmap[x, y] += abs(p)
+    if p == event_type or event_type == 0:
+        heatmap[x, y] += p
 
 # This coordinate is reverse
 print("Hottest pixel: ", np.unravel_index(np.argmax(heatmap), heatmap.shape))
