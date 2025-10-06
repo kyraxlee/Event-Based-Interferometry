@@ -28,7 +28,7 @@ def load_events(file_path):
             t = float(t)
             x = int(x)
             y = int(y)
-            pol = int(pol)  # 1 = ON, 0 = OFF
+            pol = -1 if int(pol) == 0 else 1   # 1 = ON, -1 = OFF
             data.append((t, x, y, pol))
     events_np = np.array(data, dtype=np.float64)
     events_np = events_np[events_np[:, 0].argsort()]  # Sort by time
@@ -36,7 +36,7 @@ def load_events(file_path):
 
 # Function to save the plot with appropriate filename
 def save_plot(fig, filename, event_type, zoom=False):
-    match = re.search(r'(\d+)Hz', event_file)
+    match = re.search(r'(\d+)Hz', filename)
 
     if match:
         frequency = int(match.group(1))
@@ -82,9 +82,11 @@ for event_file in event_files:
     x_lower, x_upper = 0, 346
     y_lower, y_upper = 0, 260
 
+    event_type = 0
+
     focused_events = np.array([
         e for e in events 
-        if x_lower <= e[1] < x_upper and y_lower <= e[2] < y_upper and e[3] == 1
+        if x_lower <= e[1] < x_upper and y_lower <= e[2] < y_upper and e[3] == (event_type if event_type != 0 else e[3])
     ])
     focused_events[:, 1] -= x_lower  # Normalize x
     focused_events[:, 2] -= y_lower  # Normalize y
@@ -94,14 +96,11 @@ for event_file in event_files:
 
     print("Number of ON events:", focused_events.shape[0])
 
-    event_type = 1
-
     # Accumulate events into heatmap
     heatmap = np.zeros((rows, cols))
     for t, x, y, pol in focused_events:
         x, y = int(x), int(y)
-        if event_type == pol or event_type == 0:
-            heatmap[y, x] += pol  # y=row, x=column
+        heatmap[y, x] += pol  # y=row, x=column
 
     # Moving spatial window
     window_size = 20  # e.g., 20x20 pixels
@@ -112,7 +111,7 @@ for event_file in event_files:
         for x in range(cols - window_size + 1):
             if event_type == 1:
                 roi_sum = np.sum(heatmap[y:y+window_size, x:x+window_size])
-            elif event_type == -1 or event_type == 0:
+            else:
                 roi_sum = np.sum(abs(heatmap[y:y+window_size, x:x+window_size]))
             if roi_sum > max_sum:
                 max_sum = roi_sum
@@ -131,16 +130,26 @@ for event_file in event_files:
     # Combined plot with inset zoom 
     fig, ax = plt.subplots(figsize=(10, 8))
     main_img = ax.imshow(heatmap, cmap='viridis')
+
+    # Event type name for title and colorbar
     if event_type == 1:
         name = "ON"
     elif event_type == -1:
         name = "OFF"
     else:
         name = "BOTH"
+
+    # Frequency for title
+    match = re.search(r'(\d+)Hz', event_file)
+    if match:
+        frequency = int(match.group(1))
+    else:
+        frequency = 80
+
     fig.colorbar(main_img, ax=ax, label=f'Number of {name} events')
     ax.set_xlabel("X")
     ax.set_ylabel("Y")
-    ax.set_title(f"Accumulated {name} events heatmap with ROI inset")
+    ax.set_title(f"Accumulated {name} events heatmap with ROI inset at {frequency} Hz")
 
     # Draw rectangle around best window in main plot
     rect = plt.Rectangle((x_bottom, y_bottom), window_size, window_size,
