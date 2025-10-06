@@ -82,6 +82,9 @@ for event_file in event_files:
     x_lower, x_upper = 0, 346
     y_lower, y_upper = 0, 260
 
+    '''
+    event_type is here
+    '''
     event_type = 0
 
     focused_events = np.array([

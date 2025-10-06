@@ -92,7 +92,6 @@ for fpath in event_files:
     x_bottom, y_bottom = best_window
     x_top = x_bottom + window_size - 1
     y_top = y_bottom + window_size - 1
-
     # Filter events in ROI
     roi_events = np.array([
         e for e in focused_events
@@ -123,5 +122,6 @@ plt.ylabel("Number of events in ROI")
 plt.title("Temporal Event Counts Across Frequencies")
 plt.legend()
 plt.tight_layout()
+plt.savefig("temporal_window_lineplot.png", dpi=300)
 plt.show()
 

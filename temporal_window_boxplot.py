@@ -108,7 +108,3 @@ plt.title("Temporal Event Distributions Across Frequencies (ROI)")
 plt.xticks(rotation=45)
 plt.tight_layout()
 plt.show()
-
-
-
-

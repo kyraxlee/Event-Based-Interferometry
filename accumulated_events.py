@@ -8,7 +8,7 @@ import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
 import matplotlib
-#matplotlib.use('Agg')
+matplotlib.use('Agg')
 
 # Load events files adapted from Yeshwanth lecture
 def load_events_from_text(file_path):
@@ -57,7 +57,7 @@ def save_plot(fig, filename, event_type):
     second = re.search(r'\((2)\)', filename)
 
         # Save the plot
-    output_dir = Path("plots/total_events")
+    output_dir = Path("plots/accumulated_events")
     output_dir.mkdir(parents=True, exist_ok=True)
 
     if event_type == 1:
@@ -84,17 +84,28 @@ def save_plot(fig, filename, event_type):
 for event_file in event_files:
     events, rows, cols = load_events_from_text(event_file)
 
+
     events = events[events[:, 2].argsort()]
 
     # Set the bounds for the square we want to focus in.
     # The commented value is (almost) the entire laser region
     #x_upper, x_lower = 150, 100              
     #y_upper, y_lower = 260, 210              
-    x_lower, x_upper = 215, 224
-    y_lower, y_upper = 89, 98
+
+    # Focused hottest region for 90Hz(2)
+    #x_lower, x_upper = 89, 98
+    #y_lower, y_upper = 215, 224
+
+    x_lower, x_upper = 0, 346
+    y_lower, y_upper = 0, 260
+    
+    '''
+    Here's the part for changing the event_type for plotting
+    '''
+    event_type = 0
 
     # Filter the events according to the bounds
-    focused_events = np.array([e for e in events if x_lower <= e[0] < x_upper and y_lower <= e[1] < y_upper])
+    focused_events = np.array([e for e in events if x_lower <= e[0] <= x_upper and y_lower <= e[1] <= y_upper and e[3] == (event_type if event_type != 0 else e[3])])
     focused_events[:, 2] -= focused_events[0, 2] # Normalize time to start at 0
     focused_events[:, 0] -= x_lower             # Normalize x to start at 0
     focused_events[:, 1] -= y_lower             # Normalize y to start at 0
@@ -114,7 +125,7 @@ for event_file in event_files:
     else:
         frequency = 80
 
-    print(f"Number of events at {frequency} Hz:", focused_events.shape[0])
+    print(f"Number of events at {frequency} Hz:", focused_events.shape)
     
     # Timestep is set to twice the frequency for Nyquist
     timestep = int(1000000 / (frequency * 2)) # microseconds
@@ -127,19 +138,13 @@ for event_file in event_files:
     fig = plt.figure(figsize=(10, 8))
     figure = plt.imshow(surface, cmap='viridis')
 
-    '''
-    Here's the part for changing the event_type for plotting
-    '''
-    event_type = 1
     index = 0
     bin = 0
 
     for x, y, t ,p in focused_events :
         x, y = int(x), int(y)
         bin_index = int(t // timestep)
-
-        if event_type == p or event_type == 0:
-            surface[x, y] += p
+        surface[x, y] += p
 
         if bin_index > bin: 
             figure.set_data(surface)
@@ -158,13 +163,13 @@ for event_file in event_files:
     plt.close()
     
     # Make a time vector for x axis
-    time_vector = np.arange(0, total_events.shape[0] * timestep, timestep)
+    time_vector = np.arange(total_events.shape[0]) * timestep
     # Plot the total events over time
     plt.figure(figsize=(8, 4))
     plt.plot(time_vector, total_events, linestyle = '-', color='b')
     plt.xlabel("Timestep")
     plt.ylabel("Number of events")
     plt.title(f"Accumulated events per timestep at {frequency} Hz")
-    plt.show()
-    #save_plot(plt, event_file, event_type)
+    #plt.show()
+    save_plot(plt, event_file, event_type)
     plt.close()
