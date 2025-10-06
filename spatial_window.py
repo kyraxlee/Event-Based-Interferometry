@@ -123,42 +123,44 @@ for event_file in event_files:
     print(f"x_bottom = {x_bottom}, x_top = {x_top}")
     print(f"y_bottom = {y_bottom}, y_top = {y_top}")
 
-    # Plot 1: accumulated heatmap with the best window highlighted
-    plt.figure(figsize=(10, 8))
-    plt.imshow(heatmap, cmap='viridis')
-    plt.colorbar(label='Number of ON events')
-    plt.xlabel("X")
-    plt.ylabel("Y")
-    plt.title("Accumulated ON events heatmap")
 
-    # Draw rectangle around best window
-    rect = plt.Rectangle((x_bottom, y_bottom), window_size, window_size,
-                        edgecolor='red', facecolor='none', linewidth=2)
-    plt.gca().add_patch(rect)
-    #plt.show()
-    save_plot(plt, event_file, event_type)
-    plt.close()
+# Combined plot with inset zoom 
+fig, ax = plt.subplots(figsize=(10, 8))
+main_img = ax.imshow(heatmap, cmap='viridis')
+fig.colorbar(main_img, ax=ax, label='Number of ON events')
+ax.set_xlabel("X")
+ax.set_ylabel("Y")
+ax.set_title("Accumulated ON events heatmap with ROI inset")
+
+# Draw rectangle around best window in main plot
+rect = plt.Rectangle((x_bottom, y_bottom), window_size, window_size,
+                     edgecolor='red', facecolor='none', linewidth=2)
+ax.add_patch(rect)
+
+# Create inset zoomed-in view
+zoom_margin = 2
+x1 = max(0, x_bottom - zoom_margin)
+x2 = min(cols, x_top + zoom_margin)
+y1 = max(0, y_bottom - zoom_margin)
+y2 = min(rows, y_top + zoom_margin)
+
+axins = inset_axes(ax, width="35%", height="35%", loc='upper left', borderpad=2)
+axins.imshow(heatmap, cmap='viridis')
+axins.set_xlim(x1, x2)
+axins.set_ylim(y2, y1)  # flipped for correct orientation
+axins.set_xticks([])
+axins.set_yticks([])
+
+# Mark the connection between inset and ROI
+mark_inset(ax, axins, loc1=2, loc2=4, fc="none", ec="blue", lw=1.5)
+
+# Add rectangle again inside the inset for clarity
+rect_zoom = plt.Rectangle((x_bottom, y_bottom), window_size, window_size,
+                          edgecolor='red', facecolor='none', linewidth=1.5)
+axins.add_patch(rect_zoom)
+
+plt.tight_layout()
+plt.show()
 
 
-
-    # Plot 2: Zoomed-in around ROI 
-    zoom_margin = 2  # pixels around the window for context
-    x1 = max(0, x_bottom - zoom_margin)
-    x2 = min(cols, x_top + zoom_margin)
-    y1 = max(0, y_bottom - zoom_margin)
-    y2 = min(rows, y_top + zoom_margin)
-
-    plt.figure(figsize=(8, 6))
-    plt.imshow(heatmap, cmap='viridis')
-    plt.colorbar(label='Number of ON events')
-    plt.xlabel("X")
-    plt.ylabel("Y")
-    plt.title("Zoomed-In View Around ROI")
-    plt.xlim(x1, x2)
-    plt.ylim(y2, y1)  # flip for correct orientation
-    rect_zoom = plt.Rectangle((x_bottom, y_bottom), window_size, window_size,
-                            edgecolor='red', facecolor='none', linewidth=2)
-    plt.gca().add_patch(rect_zoom)
-    plt.show()
-    save_plot(plt, event_file, event_type, zoom=True)
     plt.close()
