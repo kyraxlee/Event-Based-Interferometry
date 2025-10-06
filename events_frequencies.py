@@ -112,8 +112,8 @@ freqs = freqs[order]
 counts = counts[order]
 
 # Scale to "dots per thousand events"
-dots_per_thousand = 1  # 1 dot = 100 events
-dots = (counts / 100 * dots_per_thousand).astype(int)
+dots_per_thousand = 1  # 1 dot = 1000 events
+dots = (counts / 1000 * dots_per_thousand).astype(int)
 
 plt.figure(figsize=(10, 6))
 
@@ -129,4 +129,5 @@ plt.title("Frequency Response: ON Event Counts per Recording")
 plt.grid(True, linestyle="--", alpha=0.4)
 plt.tight_layout()
 plt.show()
+
 
