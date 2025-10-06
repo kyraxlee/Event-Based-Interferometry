@@ -123,7 +123,7 @@ for event_file in event_files:
     print(f"x_bottom = {x_bottom}, x_top = {x_top}")
     print(f"y_bottom = {y_bottom}, y_top = {y_top}")
 
-    # Plot accumulated heatmap with the best window highlighted
+    # Plot 1: accumulated heatmap with the best window highlighted
     plt.figure(figsize=(10, 8))
     plt.imshow(heatmap, cmap='viridis')
     plt.colorbar(label='Number of ON events')
@@ -135,6 +135,30 @@ for event_file in event_files:
     rect = plt.Rectangle((x_bottom, y_bottom), window_size, window_size,
                         edgecolor='red', facecolor='none', linewidth=2)
     plt.gca().add_patch(rect)
-    #plt.show()
+    #
+    plt.show()
+
+
+
+    # Plot 2: Zoomed-in around ROI 
+    zoom_margin = 2  # pixels around the window for context
+    x1 = max(0, x_bottom - zoom_margin)
+    x2 = min(cols, x_top + zoom_margin)
+    y1 = max(0, y_bottom - zoom_margin)
+    y2 = min(rows, y_top + zoom_margin)
+
+    plt.figure(figsize=(8, 6))
+    plt.imshow(heatmap, cmap='viridis')
+    plt.colorbar(label='Number of ON events')
+    plt.xlabel("X")
+    plt.ylabel("Y")
+    plt.title("Zoomed-In View Around ROI")
+    plt.xlim(x1, x2)
+    plt.ylim(y2, y1)  # flip for correct orientation
+    rect_zoom = plt.Rectangle((x_bottom, y_bottom), window_size, window_size,
+                            edgecolor='red', facecolor='none', linewidth=2)
+    plt.gca().add_patch(rect_zoom)
+    plt.show()
+
     save_plot(plt, event_file, event_type)
     plt.close()
