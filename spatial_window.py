@@ -135,8 +135,9 @@ for event_file in event_files:
     rect = plt.Rectangle((x_bottom, y_bottom), window_size, window_size,
                         edgecolor='red', facecolor='none', linewidth=2)
     plt.gca().add_patch(rect)
-    #
-    plt.show()
+    #plt.show()
+    save_plot(plt, event_file, event_type)
+    plt.close()
 
 
 
@@ -159,6 +160,5 @@ for event_file in event_files:
                             edgecolor='red', facecolor='none', linewidth=2)
     plt.gca().add_patch(rect_zoom)
     plt.show()
-
-    save_plot(plt, event_file, event_type)
+    save_plot(plt, event_file, event_type, zoom=True)
     plt.close()
