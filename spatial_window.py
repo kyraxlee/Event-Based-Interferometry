@@ -93,7 +93,7 @@ for event_file in event_files:
 
     print("Number of ON events:", focused_events.shape[0])
 
-    event_type = 1
+    event_type = -1
 
     # Accumulate events into heatmap
     heatmap = np.zeros((rows, cols))
@@ -109,7 +109,10 @@ for event_file in event_files:
 
     for y in range(rows - window_size + 1):
         for x in range(cols - window_size + 1):
-            roi_sum = np.sum(heatmap[y:y+window_size, x:x+window_size])
+            if event_type == 1 or event_type == 0:
+                roi_sum = np.sum(heatmap[y:y+window_size, x:x+window_size])
+            elif event_type == -1:
+                roi_sum = np.sum(abs(heatmap[y:y+window_size, x:x+window_size]))
             if roi_sum > max_sum:
                 max_sum = roi_sum
                 best_window = (x, y)
@@ -126,10 +129,16 @@ for event_file in event_files:
     # Plot 1: accumulated heatmap with the best window highlighted
     plt.figure(figsize=(10, 8))
     plt.imshow(heatmap, cmap='viridis')
-    plt.colorbar(label='Number of ON events')
+    if event_type == 1:
+        name = "ON"
+    elif event_type == -1:
+        name = "OFF"
+    else:
+        name = "BOTH"
+    plt.colorbar(label=f'Number of {name} events')
     plt.xlabel("X")
     plt.ylabel("Y")
-    plt.title("Accumulated ON events heatmap")
+    plt.title(f"Accumulated {name} events heatmap")
 
     # Draw rectangle around best window
     rect = plt.Rectangle((x_bottom, y_bottom), window_size, window_size,
@@ -138,8 +147,6 @@ for event_file in event_files:
     #plt.show()
     save_plot(plt, event_file, event_type)
     plt.close()
-
-
 
     # Plot 2: Zoomed-in around ROI 
     zoom_margin = 2  # pixels around the window for context
@@ -159,6 +166,6 @@ for event_file in event_files:
     rect_zoom = plt.Rectangle((x_bottom, y_bottom), window_size, window_size,
                             edgecolor='red', facecolor='none', linewidth=2)
     plt.gca().add_patch(rect_zoom)
-    plt.show()
+    #plt.show()
     save_plot(plt, event_file, event_type, zoom=True)
     plt.close()
