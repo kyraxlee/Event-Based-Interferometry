@@ -1,13 +1,14 @@
 # A library for picking the event file
 # If you do not want to download tkinter or use this, just replace it with the path to the event file
+import re
 from tkinter.filedialog import askopenfilenames
 event_files = askopenfilenames(title="Select Event File")
 
-import re
 import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
 import matplotlib
+from matplotlib.patches import Rectangle
 matplotlib.use('Agg')
 
 # Load events files adapted from Yeshwanth lecture
@@ -43,21 +44,20 @@ def load_events_from_text(file_path):
     events_np = events_np[events_np[:, 2].argsort()]
     return events_np, rows, cols
 
-# Function to save the plot with appropriate filename
 def save_plot(fig, filename, event_type):
+    # Search for the frequency in the filename
     match = re.search(r'(\d+)Hz', event_file)
 
     if match:
         frequency = int(match.group(1))
     else:
         frequency = 80
-    # Search for the frequency in the filename
     base = re.search(r'baseline', filename)
     static = re.search(r'static', filename)
     second = re.search(r'\((2)\)', filename)
 
         # Save the plot
-    output_dir = Path("plots/total_events")
+    output_dir = Path("plots/heatmaps")
     output_dir.mkdir(parents=True, exist_ok=True)
 
     if event_type == 1:
@@ -80,33 +80,12 @@ def save_plot(fig, filename, event_type):
             plt.savefig(output_dir / f"{frequency}Hz.png")
     return
 
-
 for event_file in event_files:
+
     events, rows, cols = load_events_from_text(event_file)
 
     events = events[events[:, 2].argsort()]
 
-    # Set the bounds for the square we want to focus in.
-    # The commented value is (almost) the entire laser region
-    #x_upper, x_lower = 150, 100              
-    #y_upper, y_lower = 260, 210              
-    x_lower, x_upper = 0, 346
-    y_lower, y_upper = 0, 260
-
-    # Filter the events according to the bounds
-    focused_events = np.array([e for e in events if x_lower <= e[0] < x_upper and y_lower <= e[1] < y_upper])
-    focused_events[:, 2] -= focused_events[0, 2] # Normalize time to start at 0
-    focused_events[:, 0] -= x_lower             # Normalize x to start at 0
-    focused_events[:, 1] -= y_lower             # Normalize y to start at 0
-
-    # Set the rows and cols for plotting
-    rows = x_upper - x_lower + 1
-    cols = y_upper - y_lower + 1
-
-    # Intialize variables for plotting 
-    # Timestamps in event data is in microseconds
-
-    # Search for the frequency in the filename
     match = re.search(r'(\d+)Hz', event_file)
 
     if match:
@@ -114,51 +93,37 @@ for event_file in event_files:
     else:
         frequency = 80
 
-    print(f"Number of events at {frequency} Hz:", focused_events.shape[0])
-    
-    # Timestep is set to twice the frequency for Nyquist
-    timestep = int(1000000 / (frequency * 2)) # microseconds
+    print(f"Number of events at {frequency} Hz:", events.shape[0])
 
-    # For plotting
-    surface = np.zeros((rows, cols))
-    total_events = np.zeros(int(focused_events[-1, 2] // timestep) + 1)
+    event_type = 0 # 1 for ON events, -1 for OFF events, 0 for both
 
-    # Plot
-    fig = plt.figure(figsize=(10, 8))
-    figure = plt.imshow(surface, cmap='viridis', vmin=-1, vmax=1)
-    index = 0
-
-    '''
-    Here's the part for changing the event_type for plotting
-    '''
-    event_type = 0
-
-    for x, y, t ,p in focused_events :
+    heatmap = np.zeros((rows, cols))
+    for x, y, t, p in events:
         x, y = int(x), int(y)
-        if event_type == p:
-            surface[x, y] = p
-        
-        if int(t // timestep) == index: 
-            figure.set_data(surface)
-            fig.canvas.draw_idle()
-            # Comment this line to skip the animation
-            #plt.pause(0.1)
-            # Get the total number of events
-            total_events[int(t // timestep)] = np.sum(abs(surface))
-            # Reset the surface to display the next frame
-            # Can implement a decay factor here instead
-            surface = np.zeros((rows, cols)) 
-            # Go to next timestep
-            index += 1
-        
-    plt.close()
+        if p == event_type or event_type == 0:
+            heatmap[x, y] += p
 
-    # Plot the total events over time
-    plt.figure(figsize=(8, 4))
-    plt.plot(total_events, linestyle = '-', color='b', label="Data")
-    plt.xlabel("Timestep")
-    plt.ylabel("Number of events")
-    plt.title("Number of events per timestep")
+    # This coordinate is reverse
+    hottest_x, hottest_y = np.unravel_index(np.argmax(np.abs(heatmap)), heatmap.shape)
+    print("Hottest pixel:", (hottest_x, hottest_y))
+
+    # Draw a small box around the hottest pixel
+    box_size = 5
+    plt.figure(figsize=(10, 8))
+    plt.title(f"Event Heatmap at {frequency} Hz for {'ON' if event_type == 1 else 'OFF' if event_type == -1 else 'BOTH'} Events")
+    # Plot the heatmap
+    plt.imshow(heatmap, cmap="viridis")
+    plt.colorbar()
+    box_size = 5
+    rect = Rectangle(
+        (hottest_y - box_size, hottest_x - box_size),  # x,y are swapped for display coordinates
+        2 * box_size,  # width
+        2 * box_size,  # height
+        linewidth=2,
+        edgecolor='red',
+        facecolor='none'
+    )
+    plt.gca().add_patch(rect)
     #plt.show()
     save_plot(plt, event_file, event_type)
     plt.close()
