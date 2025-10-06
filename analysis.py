@@ -41,6 +41,39 @@ def load_events_from_text(file_path):
     events_np = events_np[events_np[:, 2].argsort()]
     return events_np, rows, cols
 
+# Function to save the plot with appropriate filename
+def save_plot(fig, filename, event_type):
+    # Search for the frequency in the filename
+    match = re.search(r'(\d+)Hz', filename)
+    base = re.search(r'baseline', filename)
+    static = re.search(r'static', filename)
+    second = re.search(r'\((2)\)', filename)
+
+        # Save the plot
+    output_dir = Path("plots/total_events")
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    if event_type == 1:
+        output_dir = output_dir / "ON"
+    elif event_type == -1:
+        output_dir = output_dir / "OFF"
+    else:
+        output_dir = output_dir / "BOTH"
+
+    output_dir.mkdir(exist_ok=True) 
+
+    if base:
+        plt.savefig(output_dir / f"baseline.png")
+    elif static:
+        plt.savefig(output_dir / f"static.png")
+    else:
+        if second:
+            plt.savefig(output_dir / f"{frequency}Hz(2).png")
+        else:
+            plt.savefig(output_dir / f"{frequency}Hz.png")
+    return
+
+
 for event_file in event_files:
     events, rows, cols = load_events_from_text(event_file)
 
@@ -67,10 +100,10 @@ for event_file in event_files:
 
     # Intialize variables for plotting 
     # Timestamps in event data is in microseconds
+
+    # Search for the frequency in the filename
     match = re.search(r'(\d+)Hz', event_file)
-    base = re.search(r'baseline', event_file)
-    static = re.search(r'static', event_file)
-    second = re.search(r'\((2)\)', event_file)
+
     if match:
         frequency = int(match.group(1))
     else:
@@ -87,9 +120,15 @@ for event_file in event_files:
     figure = plt.imshow(surface, cmap='viridis', vmin=-1, vmax=1)
     index = 0
 
+    '''
+    Here's the part for changing the event_type for plotting
+    '''
+    event_type = 1
+
     for x, y, t ,p in focused_events :
         x, y = int(x), int(y)
-        surface[x, y] = p
+        if event_type == p:
+            surface[x, y] = p
         
         if int(t // timestep) == index: 
             figure.set_data(surface)
@@ -113,15 +152,5 @@ for event_file in event_files:
     plt.ylabel("Number of events")
     plt.title("Number of events per timestep")
     #plt.show()
-    output_dir = Path("plots")
-    output_dir.mkdir(exist_ok=True)
-    if base:
-        plt.savefig(output_dir / f"baseline.png")
-    elif static:
-        plt.savefig(output_dir / f"static.png")
-    else:
-        if second:
-            plt.savefig(output_dir / f"{frequency}Hz(2).png")
-        else:
-            plt.savefig(output_dir / f"{frequency}Hz.png")
+    save_plot(plt, event_file, event_type)
     plt.close()
