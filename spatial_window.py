@@ -2,6 +2,7 @@ import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
 import tkinter as tk
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes, mark_inset
 import re
 
 # Choose the file for analysis
@@ -93,7 +94,7 @@ for event_file in event_files:
 
     print("Number of ON events:", focused_events.shape[0])
 
-    event_type = -1
+    event_type = 1
 
     # Accumulate events into heatmap
     heatmap = np.zeros((rows, cols))
@@ -109,9 +110,9 @@ for event_file in event_files:
 
     for y in range(rows - window_size + 1):
         for x in range(cols - window_size + 1):
-            if event_type == 1 or event_type == 0:
+            if event_type == 1:
                 roi_sum = np.sum(heatmap[y:y+window_size, x:x+window_size])
-            elif event_type == -1:
+            elif event_type == -1 or event_type == 0:
                 roi_sum = np.sum(abs(heatmap[y:y+window_size, x:x+window_size]))
             if roi_sum > max_sum:
                 max_sum = roi_sum
@@ -127,49 +128,48 @@ for event_file in event_files:
     print(f"y_bottom = {y_bottom}, y_top = {y_top}")
 
 
-# Combined plot with inset zoom 
-fig, ax = plt.subplots(figsize=(10, 8))
-main_img = ax.imshow(heatmap, cmap='viridis')
+    # Combined plot with inset zoom 
+    fig, ax = plt.subplots(figsize=(10, 8))
+    main_img = ax.imshow(heatmap, cmap='viridis')
     if event_type == 1:
         name = "ON"
     elif event_type == -1:
         name = "OFF"
     else:
         name = "BOTH"
-fig.colorbar(main_img, ax=ax, label=f'Number of {name} events')
-ax.set_xlabel("X")
-ax.set_ylabel("Y")
-ax.set_title(f"Accumulated {name} events heatmap with ROI inset")
+    fig.colorbar(main_img, ax=ax, label=f'Number of {name} events')
+    ax.set_xlabel("X")
+    ax.set_ylabel("Y")
+    ax.set_title(f"Accumulated {name} events heatmap with ROI inset")
 
-# Draw rectangle around best window in main plot
-rect = plt.Rectangle((x_bottom, y_bottom), window_size, window_size,
-                     edgecolor='red', facecolor='none', linewidth=2)
-ax.add_patch(rect)
+    # Draw rectangle around best window in main plot
+    rect = plt.Rectangle((x_bottom, y_bottom), window_size, window_size,
+                        edgecolor='red', facecolor='none', linewidth=2)
+    ax.add_patch(rect)
 
-# Create inset zoomed-in view
-zoom_margin = 2
-x1 = max(0, x_bottom - zoom_margin)
-x2 = min(cols, x_top + zoom_margin)
-y1 = max(0, y_bottom - zoom_margin)
-y2 = min(rows, y_top + zoom_margin)
+    # Create inset zoomed-in view
+    zoom_margin = 2
+    x1 = max(0, x_bottom - zoom_margin)
+    x2 = min(cols, x_top + zoom_margin)
+    y1 = max(0, y_bottom - zoom_margin)
+    y2 = min(rows, y_top + zoom_margin)
 
-axins = inset_axes(ax, width="35%", height="35%", loc='upper left', borderpad=2)
-axins.imshow(heatmap, cmap='viridis')
-axins.set_xlim(x1, x2)
-axins.set_ylim(y2, y1)  # flipped for correct orientation
-axins.set_xticks([])
-axins.set_yticks([])
+    axins = inset_axes(ax, width="35%", height="35%", loc='upper left', borderpad=2)
+    axins.imshow(heatmap, cmap='viridis')
+    axins.set_xlim(x1, x2)
+    axins.set_ylim(y2, y1)  # flipped for correct orientation
+    axins.set_xticks([])
+    axins.set_yticks([])
 
-# Mark the connection between inset and ROI
-mark_inset(ax, axins, loc1=2, loc2=4, fc="none", ec="blue", lw=1.5)
+    # Mark the connection between inset and ROI
+    mark_inset(ax, axins, loc1=2, loc2=4, fc="none", ec="blue", lw=1.5)
 
-# Add rectangle again inside the inset for clarity
-rect_zoom = plt.Rectangle((x_bottom, y_bottom), window_size, window_size,
-                          edgecolor='red', facecolor='none', linewidth=1.5)
-axins.add_patch(rect_zoom)
+    # Add rectangle again inside the inset for clarity
+    rect_zoom = plt.Rectangle((x_bottom, y_bottom), window_size, window_size,
+                            edgecolor='red', facecolor='none', linewidth=1.5)
+    axins.add_patch(rect_zoom)
 
-plt.tight_layout()
-#plt.show()
-
-
+    plt.tight_layout()
+    #plt.show()
+    save_plot(fig, event_file, event_type, zoom=False)
     plt.close()
