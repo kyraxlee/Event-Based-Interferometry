@@ -7,6 +7,8 @@ import re
 import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')
 
 # Load events files adapted from Yeshwanth lecture
 def load_events_from_text(file_path):
@@ -43,8 +45,13 @@ def load_events_from_text(file_path):
 
 # Function to save the plot with appropriate filename
 def save_plot(fig, filename, event_type):
+    match = re.search(r'(\d+)Hz', event_file)
+
+    if match:
+        frequency = int(match.group(1))
+    else:
+        frequency = 80
     # Search for the frequency in the filename
-    match = re.search(r'(\d+)Hz', filename)
     base = re.search(r'baseline', filename)
     static = re.search(r'static', filename)
     second = re.search(r'\((2)\)', filename)
@@ -96,8 +103,6 @@ for event_file in event_files:
     rows = x_upper - x_lower + 1
     cols = y_upper - y_lower + 1
 
-    print("Number of events:", focused_events.shape[0])
-
     # Intialize variables for plotting 
     # Timestamps in event data is in microseconds
 
@@ -108,6 +113,9 @@ for event_file in event_files:
         frequency = int(match.group(1))
     else:
         frequency = 80
+
+    print(f"Number of events at {frequency} Hz:", focused_events.shape[0])
+    
     # Timestep is set to twice the frequency for Nyquist
     timestep = int(1000000 / (frequency * 2)) # microseconds
 
@@ -123,7 +131,7 @@ for event_file in event_files:
     '''
     Here's the part for changing the event_type for plotting
     '''
-    event_type = 1
+    event_type = 0
 
     for x, y, t ,p in focused_events :
         x, y = int(x), int(y)
