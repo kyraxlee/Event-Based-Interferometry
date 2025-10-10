@@ -1,7 +1,7 @@
 # Event-Based Interferometry for Acoustic Imaging and Signal Reconstruction
 ## Scripts
 This repository has the Python scripts used to analyse the data coollected for the Event-based Interferometry for Acoustic Imaging and Signal Reconstruction project.
-All of the scripts in the repository follows these common intial processing steps:
+All of the scripts in the repository follows these common initial processing steps:
 1. Load the event data files.
 2. A function to save the generated plots as a png file.
 3. Filter the data by the event polarities with either ON, OFF, or BOTH types of event.
