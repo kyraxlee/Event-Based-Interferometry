@@ -1,3 +1,5 @@
+# The load_events function is adapted from the lectures by Yeshwanth Bethi
+
 import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
@@ -110,6 +112,7 @@ for event_file in event_files:
     max_sum = 0
     best_window = (0, 0)
 
+    # Scan the heatmap to find the window with the highest event counts
     for y in range(rows - window_size + 1):
         for x in range(cols - window_size + 1):
             if event_type == 1:
@@ -120,6 +123,7 @@ for event_file in event_files:
                 max_sum = roi_sum
                 best_window = (x, y)
 
+    # Set the window coordinates
     x_bottom = best_window[0]
     x_top = x_bottom + window_size - 1
     y_bottom = best_window[1]

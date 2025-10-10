@@ -1,3 +1,5 @@
+# The load_events function is adapted from the lectures by Yeshwanth Bethi
+
 import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt

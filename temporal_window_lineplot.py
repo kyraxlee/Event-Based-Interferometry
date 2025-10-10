@@ -18,6 +18,7 @@
                     #fontsize=10, verticalalignment='top', horizontalalignment='right',
                     #bbox=dict(facecolor='white', alpha=0.7, edgecolor='black'))
 
+# The load_events function is adapted from the lectures by Yeshwanth Bethi
 
 import numpy as np
 from pathlib import Path

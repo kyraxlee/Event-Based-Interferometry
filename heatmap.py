@@ -1,3 +1,5 @@
+# The load_events_from_text function is adapted from the lectures by Yeshwanth Bethi
+
 # A library for picking the event file
 # If you do not want to download tkinter or use this, just replace it with the path to the event file
 import re
@@ -60,6 +62,7 @@ def save_plot(fig, filename, event_type):
     output_dir = Path("plots/heatmaps")
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    # Create subdirectory based on event type
     if event_type == 1:
         output_dir = output_dir / "ON"
     elif event_type == -1:
@@ -69,6 +72,7 @@ def save_plot(fig, filename, event_type):
 
     output_dir.mkdir(exist_ok=True) 
 
+    # Save the plot with appropriate name
     if base:
         plt.savefig(output_dir / f"baseline.png")
     elif static:
@@ -80,12 +84,14 @@ def save_plot(fig, filename, event_type):
             plt.savefig(output_dir / f"{frequency}Hz.png")
     return
 
+# Loop through each selected event file
 for event_file in event_files:
-
     events, rows, cols = load_events_from_text(event_file)
 
+    # Sort events by timestamp
     events = events[events[:, 2].argsort()]
 
+    # Normalise time to start at 0
     match = re.search(r'(\d+)Hz', event_file)
 
     if match:
@@ -97,6 +103,7 @@ for event_file in event_files:
 
     event_type = 0 # 1 for ON events, -1 for OFF events, 0 for both
 
+    # Accumulate events into heatmap
     heatmap = np.zeros((rows, cols))
     for x, y, t, p in events:
         x, y = int(x), int(y)
@@ -111,9 +118,11 @@ for event_file in event_files:
     box_size = 5
     plt.figure(figsize=(10, 8))
     plt.title(f"Event Heatmap at {frequency} Hz for {'ON' if event_type == 1 else 'OFF' if event_type == -1 else 'BOTH'} Events")
+
     # Plot the heatmap
     plt.imshow(heatmap, cmap="viridis")
     plt.colorbar()
+    # Draw a rectangle around the hottest pixel
     box_size = 5
     rect = Rectangle(
         (hottest_y - box_size, hottest_x - box_size),  # x,y are swapped for display coordinates
@@ -124,6 +133,6 @@ for event_file in event_files:
         facecolor='none'
     )
     plt.gca().add_patch(rect)
-    #plt.show()
-    save_plot(plt, event_file, event_type)
+    plt.show()
+    #save_plot(plt, event_file, event_type)
     plt.close()
