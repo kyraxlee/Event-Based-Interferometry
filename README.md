@@ -1,4 +1,7 @@
 # Event-Based Interferometry for Acoustic Imaging and Signal Reconstruction
+## Overview
+This project contains both group (main branch) and individual (noise-analysis branch) elements and has two final reports. The work involved represents investigations into understanding how event-based cameras might be used for visualizing sound. 
+
 ## Scripts
 This repository has the Python scripts used to analyse the data coollected for the Event-based Interferometry for Acoustic Imaging and Signal Reconstruction project.
 All of the scripts in the repository follows these common initial processing steps:
