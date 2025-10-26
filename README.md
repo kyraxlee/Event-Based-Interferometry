@@ -10,3 +10,4 @@ All of the scripts in the repository follows these common initial processing ste
 
 The individual script functionality is as follow:
 - event_counts.py: Count events to compute all events and compare ROI events vs total to show how much of the signal energy is localized in the ROI
+- event_consistency.py: Compute ROI temporal consistency via standard deviations per pixel to determine regular/irregular firing rates
