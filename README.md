@@ -18,4 +18,5 @@ The individual script functionality is as follow:
 - SNR.py: Compute per-pixel and ROI SNR using the Moeys et al. formulation adapted to ROI baselines
 
 ## Viewing all Plots and Outputs
-Only a selection of representative plots are shown in the final report.  To reproduce *all* plots and numerical outputs for every dataset, simply run the scripts in this repository. All figures and CSV files will automatically save into their respective pre-defined directories. This allows full reproducibility of the spatial, temporal, and SNR analyses described in the report.
+Only a selection of representative plots are shown in the final report.  To reproduce *all* plots and numerical outputs for every dataset, simply run the scripts in this repository. All figures and CSV files will automatically save into their respective pre-defined directories. This allows full reproducibility of the spatial, temporal, and SNR analyses described in the report. Or, to just view all plots and see the raw data, access the following drive: https://studentuwsedu-my.sharepoint.com/:f:/g/personal/22171055_student_westernsydney_edu_au/EsIdPH_ZvrNBhD0BDbotPNgB75sBmdd5dn-h1H9UA8vC6w?e=euzjva
+
